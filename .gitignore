@@ -1,7 +1,9 @@
 FingerprintSensor/lib/
-*pio
 *.vscode
 FingerprintSensorESP8266/lib/
 PythonFlaskServer/__pycache__/
-PythonFlaskServer/flserver/*
+PythonFlaskServer/flserver/
+
+# extensions
 *.exe
+*pio
