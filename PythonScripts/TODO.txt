@@ -1,0 +1,15 @@
+1) Test code and mess with buttons to switch between states
+2) Mess with ESP8266
+3) Try networking stuff
+4) Mess with LCD
+
+
+RASP PI Side
+1) do everything
+... setup pi, get speaker (bluetooth?), make server, store stuff in memory
+what rpc, etc.
+
+
+
+BACK-OF-MIND
+maybe use protothread to avoid blocking waits on the fingerprint
