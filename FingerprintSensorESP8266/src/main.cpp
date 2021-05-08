@@ -1,6 +1,8 @@
+#define ESP8266
+
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
-#include <SPI.h>
+#include <SPIClient.h>
 
 String urlencode(String str);
 void sendDataToArduino(char buf[]);
