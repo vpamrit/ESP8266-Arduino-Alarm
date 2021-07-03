@@ -145,6 +145,7 @@ void setup()
   Serial.println("Finished sending message");
 
   //init protothreads
+  //turn off now
   // PT_INIT(&buttonPT);
   // PT_INIT(&statePT);
 }
