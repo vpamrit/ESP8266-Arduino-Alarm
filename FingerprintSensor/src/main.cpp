@@ -16,7 +16,7 @@
 
 #include <Adafruit_Fingerprint.h>
 #include <LoggingHelpers.h>
-#include <NotifierClient.h>
+#include <abstracted/NotifierClient.h>
 #include <pt.h>
 #include <pt-sleep.h>
 
@@ -62,31 +62,33 @@ volatile unsigned long lastTimeUpdated = 0;
 volatile int pendingStateSwitches = 0;
 static unsigned long timer1;
 static unsigned long timer2;
-NotifierClient client;
+static NotifierClient nClient;
 static Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 uint8_t id;
+static void testFunc();
 
-char buff [100];
+char buff[100];
 volatile byte index;
-volatile bool receivedone;  /* use reception complete flag */
+volatile bool receivedone; /* use reception complete flag */
 
 //protothread init
 static struct pt buttonPT, statePT;
 
 // create SPI Client
-static SPIMaster spiClient;
+static NotifierClient client;
 
 void setupPins()
 {
   pinMode(stateButton, INPUT);
 }
 
-void setupSPI() {
-  SPCR |= bit(SPE);         /* Enable SPI */
-  pinMode(MISO, OUTPUT);    /* Make MISO pin as OUTPUT */
+void setupSPI()
+{
+  SPCR |= bit(SPE);      /* Enable SPI */
+  pinMode(MISO, OUTPUT); /* Make MISO pin as OUTPUT */
   index = 0;
   receivedone = false;
-  SPI.attachInterrupt();    /* Attach SPI interrupt */
+  SPI.attachInterrupt(); /* Attach SPI interrupt */
 }
 
 void setup()
@@ -97,80 +99,101 @@ void setup()
   delay(100);
   Serial.println("\n\nNotification system on");
 
-  while (1)
-  {
-    // set the data rate for the sensor serial port
-    finger.begin(57600);
+  // while (1)
+  // {
+  //   // set the data rate for the sensor serial port
+  //   finger.begin(57600);
 
-    if (finger.verifyPassword())
-    {
-      Serial.println("Found fingerprint sensor!");
-      break;
-    }
-    else
-    {
-      Serial.println("Did not find fingerprint sensor :(");
-    }
-    delay(1);
-  };
+  //   if (finger.verifyPassword())
+  //   {
+  //     Serial.println("Found fingerprint sensor!");
+  //     break;
+  //   }
+  //   else
+  //   {
+  //     Serial.println("Did not find fingerprint sensor :(");
+  //   }
+  //   delay(1);
+  // };
+
+
+  // Serial.println(F("Reading sensor parameters"));
+  // finger.getParameters();
+  // Serial.print(F("Status: 0x"));
+  // Serial.println(finger.status_reg, HEX);
+  // Serial.print(F("Sys ID: 0x"));
+  // Serial.println(finger.system_id, HEX);
+  // Serial.print(F("Capacity: "));
+  // Serial.println(finger.capacity);
+  // Serial.print(F("Security level: "));
+  // Serial.println(finger.security_level);
+  // Serial.print(F("Device address: "));
+  // Serial.println(finger.device_addr, HEX);
+  // Serial.print(F("Packet len: "));
+  // Serial.println(finger.packet_len);
+  // Serial.print(F("Baud rate: "));
+  // Serial.println(finger.baud_rate);
 
   setupSPI();
 
-
-  Serial.println(F("Reading sensor parameters"));
-  finger.getParameters();
-  Serial.print(F("Status: 0x"));
-  Serial.println(finger.status_reg, HEX);
-  Serial.print(F("Sys ID: 0x"));
-  Serial.println(finger.system_id, HEX);
-  Serial.print(F("Capacity: "));
-  Serial.println(finger.capacity);
-  Serial.print(F("Security level: "));
-  Serial.println(finger.security_level);
-  Serial.print(F("Device address: "));
-  Serial.println(finger.device_addr, HEX);
-  Serial.print(F("Packet len: "));
-  Serial.println(finger.packet_len);
-  Serial.print(F("Baud rate: "));
-  Serial.println(finger.baud_rate);
-
   attachInterrupt(digitalPinToInterrupt(stateButton), changeStateButtonPress, RISING);
+  delay(5);
+
+  // prime message
+  nClient.sendMessage();
+
+  Serial.println("Finished sending message");
 
   //init protothreads
-  PT_INIT(&buttonPT);
-  PT_INIT(&statePT);
+  // PT_INIT(&buttonPT);
+  // PT_INIT(&statePT);
 }
 
 void loop() // run over and over again
 {
- if (receivedone)          /* Check and print received buffer if any */
+  // if (receivedone) /* Check and print received buffer if any */
+  // {
+  //   buff[index] = 0;
+  //   Serial.println(index);
+  //   Serial.println(buff);
+  //   index = 0;
+  //   receivedone = false;
+  // }
+
+  // this will be used for all testing!
+  auto res = nClient.readMessage();
+  if (res)
   {
-    buff[index] = 0;
-    Serial.println(index);
-    Serial.println(buff);
-    index = 0;
-    receivedone = false;
+    Serial.println("Read message!");
   }
 
-  PT_SCHEDULE(stateFunction(&statePT));
-  PT_SCHEDULE(buttonFunction(&buttonPT));
+  // PT_SCHEDULE(stateFunction(&statePT));
+  // PT_SCHEDULE(buttonFunction(&buttonPT));
 };
 
-ISR (SPI_STC_vect)
+ISR(SPI_STC_vect)
 {
-  uint8_t oldsrg = SREG;
-  cli();
-  char c = SPDR;
-  if (index < sizeof buff)
-  {
-    buff[index++] = c;
-    Serial.println(c);
-    if (c == '\n'){     /* Check for newline character as end of msg */
-      Serial.println("Success");
-     receivedone = true;
-    }
-  }
-  SREG = oldsrg;
+  // uint8_t oldsrg = SREG;
+  // cli();
+  // char c = SPDR;
+  // if (index < sizeof buff)
+  // {
+  //   buff[index++] = c;
+  //   Serial.println(c);
+  //   if (c == '\n'){     /* Check for newline character as end of msg */
+  //     Serial.println("Success");
+  //    receivedone = true;
+  //   }
+  // }
+  // SREG = oldsrg;
+  // Serial.println("Interrupt");
+  nClient.update();
+
+  //TODO: this is the problematic line...
+}
+
+static void testFunc()
+{
 }
 
 static void changeStateButtonPress()
@@ -256,7 +279,7 @@ static int stateFunction(struct pt *pt)
 
 static uint8_t InitMode()
 {
-  client.init();
+  nClient.init();
   return PT_ENDED;
 }
 
@@ -289,7 +312,7 @@ static uint8_t ScanMode()
     static bool res = false;
 
     PT_WAIT_UNTIL(&statePT,
-                  (res = client.sendFingerConfirmation(finger.fingerID, finger.confidence)));
+                  (res = nClient.sendFingerConfirmation(finger.fingerID, finger.confidence)));
 
     // wait confirmation?
     if (res)

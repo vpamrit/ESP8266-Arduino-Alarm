@@ -4,12 +4,16 @@
 #include <ESP8266HTTPClient.h>
 #include <SPIClient.h>
 
+#include <abstracted/NotifierClient.h>
+
 String urlencode(String str);
 void sendDataToArduino(char buf[]);
 uint8_t _ss_pin = 15;
 
-
 char buff[] = "Ello M8, no slave\n";
+
+// create SPI client
+static NotifierClient client;
 
 void setup()
 {
@@ -17,31 +21,38 @@ void setup()
   Serial.println();
 
   SPI.begin();
-//  SPI.setClockDivider(SPI_CLOCK_DIV8);
+  //  SPI.setClockDivider(SPI_CLOCK_DIV8);
   SPI.setFrequency(100000);
 
-  WiFi.begin("Starbucks-Wifi", "saibaba123");
-  Serial.println("Connecting...");
+  // WiFi.begin("Starbucks-Wifi", "saibaba123");
+  // Serial.println("Connecting...");
 
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.println("...");
-  }
+  // while (WiFi.status() != WL_CONNECTED)
+  // {
+  //   delay(500);
+  //   Serial.println("...");
+  // }
 
-  Serial.println();
+  // Serial.println();
 
-  Serial.print("Connected, with IP address: ");
-  Serial.println(WiFi.localIP());
+  // Serial.print("Connected, with IP address: ");
+  // Serial.println(WiFi.localIP());
+
+  Serial.println("READY");
 }
 
 void loop()
 {
+  client.update();
 
+  if (!client.readMessage())
+  {
+    Serial.println("got nothing");
+  }
 
-  Serial.println("done");
+  delay(1000);
 
-  sendDataToArduino(buff);
+  // sendDataToArduino(buff);
 
   // if (WiFi.status() == WL_CONNECTED)
   // {
@@ -62,35 +73,33 @@ void loop()
   //   httpCode = http.POST("{\"username\":\"liljimothy\"}");
   //   http.end(); //Close connection
   // }
-
-  // delay(1000);
 }
 
-void readDataFromArduino(char buf[]) {
+void readDataFromArduino(char buf[]){
 
 };
 
-void sendDataToArduino(char buf[]) {
-  for (int i = 0; i < int(sizeof(buff)) - 1; i++)
-  {
-    char response = SPI.transfer(buff[i]);
-    if(i != 0 && response == buff[i-1]) {
-      Serial.println("DIFFERENT");
-    }
-    else if(response == buff[i]) {
-      Serial.println("SAME");
-    }
-    else if(i == 0 && response == '\n') {
-     Serial.println("DIFFERENT"); 
-    }
-    else {
-      Serial.println("WHAT JUST HAPPENED");
-    }
-    delay(1000);
-  }
-  Serial.println(); 
-  Serial.println("Completed transfer");
-}
+// void sendDataToArduino(char buf[]) {
+//   for (int i = 0; i < int(sizeof(buff)) - 1; i++)
+//   {
+//     char response = SPI.transfer(buff[i]);
+//     if(i != 0 && response == buff[i-1]) {
+//       Serial.println("DIFFERENT");
+//     }
+//     else if(response == buff[i]) {
+//       Serial.println("SAME");
+//     }
+//     else if(i == 0 && response == '\n') {
+//      Serial.println("DIFFERENT");
+//     }
+//     else {
+//       Serial.println("WHAT JUST HAPPENED");
+//     }
+//     delay(1000);
+//   }
+//   Serial.println();
+//   Serial.println("Completed transfer");
+// }
 
 String urlencode(String str)
 {
